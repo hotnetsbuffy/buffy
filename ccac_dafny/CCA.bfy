@@ -1,0 +1,25 @@
+CCA(
+input buffer loss, //
+input buffer serviced,
+input buffer input, //packet input
+output buffer arrive
+global int in_flight = 0
+)
+{ 
+    local int recent_loss = 0, recent_service = 0;
+    local bool timeout = false;
+    recent_loss = backlog(loss);
+    loss.empty();
+    recent_service = get_head(service);
+    recent_timeout = get_head(timeout);
+    local int cwnd;
+    if (in_flight == lost):
+        timeout = true;
+    in_flight -= recent_service;
+    in_flight -= recent_loss;
+    cwnd = CCA_CW(recent_loss, recent_service, recent_timeout);
+    local_int arrive_amount;
+    arrive_amount = CCA_Arrival(recent_loss, recent_service, recent_timeout, cwnd, in_flight)
+    in_flight += arrive;
+    move_bytes(input, arrive, arrive_amount)
+}

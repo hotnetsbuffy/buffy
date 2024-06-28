@@ -1,4 +1,4 @@
-include "scheduler.dfy"
+include "buffer.dfy"
 
 
 module CCA {
@@ -11,7 +11,7 @@ method AIMD(recent_loss: int, recent_service: int, timeout: bool, cwnd: real ) r
     return cwnd / 2.0;
   }
   else {
-    return cwnd + 0.1;
+    return cwnd + 0.3;
   }
 }
 
@@ -62,7 +62,6 @@ ensures in_flight < cwnd.Floor && in_flight >= 0 ==> in_flight + y == cwnd.Floor
     var in_flight := total_sent - total_lost - total_seen_serviced;
     recent_loss := backlog(ibs[0]);
     ibs[0] := [];
-// TODO: empty loss
     recent_service := backlog(ibs[1]);
     if (in_flight == recent_loss) {
         timeout := true;

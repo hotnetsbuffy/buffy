@@ -1,15 +1,10 @@
 include "buffer.dfy"
-include "sp.dfy"
-include "traffic.dfy"
 include "pathserver.dfy"
 include "CCA.dfy"
 include "delayserver.dfy"
 import CC = CCA
-import TR = Traffic 
-import SP = StrictPriority
 const T := 10
-
-
+import opened Buffer
 //method flush(ob: Buf, ib: Buf)
 // method flush(ob: array<Buf>, oi: int, ib: array<Buf>, ii: int)
 

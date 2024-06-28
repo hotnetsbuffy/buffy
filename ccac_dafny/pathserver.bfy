@@ -1,0 +1,65 @@
+#DEFINE c 10
+#DEFINE slack 2
+#DEFINE loss_threshold 20
+
+Path_Server(
+input buffer arrive,
+output buffer loss,
+output buffer serviced,
+output buffer out,
+global int time = 0;
+global int tokens = 0;
+global queue wastetrack = new_queue();
+global queue servicetrack = new_queue();
+)
+{
+    recent_loss = 0;
+    recent_service = 0;
+    t | 0 <= t <= c;
+  if  (tokens + c <= backlog(arrive)) {
+     addamount = c;
+  }
+  else if (tokens <= backlog(arrive)) {
+    x :| 0 <= x <= tokens + c - backlog(arrive);
+    addamount = x + backlog(arrive) - tokens;
+
+  }
+  else { 
+    addamount = t;
+  }
+    wasteamount = c - addamount;
+    lowerbound = 0;
+    if (time >= delay) {
+        lowerbound := max(0, c * (time - delay) - wastetrack[time - delay]);
+    }
+    wasteadd := wasteamount;
+    if(|wastetrack| > 0) {
+      wasteadd := wastetrack[|wastetrack| - 1] + wasteamount;
+    }
+    upperbound := (c * time) - wasteadd;
+    servicetotal :| lowerbound <= servicetotal <= upperbound;
+
+    if (time > 1 && servicetotal <= servicetrack[|servicetrack| - 1]) {
+      servicetotal := servicetrack[|servicetrack| - 1];
+    }
+    sub := 0;
+    if(time > 1) {
+      sub := servicetrack[|servicetrack| - 1];
+    }
+    serviceincr := servicetotal - sub;
+    if(serviceincr <= servicetotal) {
+    for j := 0 to serviceincr 
+    {
+        move(arrive, out, 1);
+        serviced = serviced + [time];
+    }}
+    lost = 0;
+    tokens = tokens + addamount - serviceincr;
+    if(backlog(arrive) - newtokens > loss_threshold) {
+      lost_bytes = (backlog(ibs[0]) - loss_threshold);
+      move(arrive, loss, lost_bytes);
+    }
+    time = time + 1;
+    wastetrack.append(wastetrack.tail() + wasteamount);
+    servicetrack.append(servicetotal);
+}

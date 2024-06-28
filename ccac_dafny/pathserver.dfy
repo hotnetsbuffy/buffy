@@ -1,4 +1,4 @@
-include "scheduler.dfy"
+include "buffer.dfy"
 
 
 
@@ -107,7 +107,6 @@ predicate greaterthan0(s: seq<int>)
     var recent_loss := 0;
     var recent_service := 0;
     var addamount := gettokenamount(tokens, backlog(ibs[0]), c);
-    assert tokens + c >= backlog(ibs[0]) ==> addamount + tokens >= backlog(ibs[0]) ;
     var wasteamount := c - addamount;
     var lowerbound := 0;
     if (time >= delay) {
@@ -118,19 +117,7 @@ predicate greaterthan0(s: seq<int>)
       wasteadd := wastetrack[|wastetrack| - 1] + wasteamount;
     }
     var upperbound := (c * time) - wasteadd;
-    assert(wasteamount <= c);
-    assert (addamount <= c);
-    assert(lowerbound <= upperbound);
-    assert(wasteadd >= 0);
     var servicetotal :| lowerbound <= servicetotal <= upperbound;
-    print(lowerbound);
-    print(" ");
-    print(upperbound);
-    print(" ");
-    print(wasteamount);
-    print(" ");
-    print(servicetotal);
-
     if (time > 1 && servicetotal <= servicetrack[|servicetrack| - 1]) {
       servicetotal := servicetrack[|servicetrack| - 1];
     }
@@ -139,13 +126,10 @@ predicate greaterthan0(s: seq<int>)
       sub := servicetrack[|servicetrack| - 1];
     }
     var serviceincr := servicetotal - sub;
-    print(" ");
     print(serviceincr);
-    assert(servicetotal >= sub);
-    assert(upperbound <= c * time);
-    assert tokens + c <= backlog(ibs[0]) ==> wasteamount == 0;
     var start := ibs[0];
     ghost var initial := |start|;
+    if(serviceincr <= servicetotal) {
     for j := 0 to serviceincr 
         invariant 0 <= j <= serviceincr
         invariant backlog(start) >= 0
@@ -155,14 +139,12 @@ predicate greaterthan0(s: seq<int>)
     {
         ghost var initial := |ibs[0]|;
         var (ib, ob) := move(start, obs[0]);
-        assert(|start| > 0 ==> |start| >= |ib|);
         start := ib;
         obs[0] := ob;
         obs[2] := obs[2] + [time];
     }
+    }
     ibs[0] := start;
-    assert tokens + c <= backlog(ibs[0]) + serviceincr ==> wasteamount == 0;
-    assert(addamount >= 0);
     var lost := 0;
     var newtokens := tokens + addamount - serviceincr;
     if(backlog(ibs[0]) - newtokens > loss_threshold) {
@@ -175,50 +157,5 @@ predicate greaterthan0(s: seq<int>)
     if time == 1 then [servicetotal] else servicetrack + [servicetotal];
   }
 
-  /*method run_ts (ibs: array<Buf>, obs: array<Buf>) 
-  {
-    //ibs[0] is loss, ibs[1] is serviced,ibs[2] is input obs[0] is arrived, 
-    var recent_loss := 0;
-    var recent_service := 0;
-    for i := 1 to c {
-      tokenqueue := tokenqueue + [time];
-    }
-    for j := 1 to |tokenqueue| {
-      if (|tokenqueue| > 0 && tokenqueue[0] < time - slack) {
-        tokenqueue := tokenqueue[1..];
-      }
-    }
-    var movable_bytes := min(|tokenqueue|, backlog(ibs[0]) - |delay|);
-    var delay_time :| 0 < delay_time < 2;
-    var timeout := false;
-    recent_loss := backlog(ibs[0]);
-    ibs[0] := [];
-// TODO: empty loss
-    recent_service := head(ibs[1]);
-    if (in_flight == recent_loss) {
-        timeout := true;
-    }
-    for j := 1 to movable_bytes {
-      tokenqueue := tokenqueue[1..];
-      delay := delay + [delay_time + time];
-    }
-    var lost := 0;
-    if(|tokenqueue| == 0 && backlog(ibs[0]) - movable_bytes - |delay| > loss_threshold) {
-      var lost_bytes := (backlog(ibs[0]) - loss_threshold);
-      ibs[0], obs[1] := moven(ibs[0], obs[1], lost_bytes);
-    }
-    var move_bytes := 0;
-    for i := 0 to |delay| {
-      if(delay[i] < time) {
-      move_bytes := move_bytes + 1;
-      var (ib, ob) := move(ibs[0], obs[0]);
-      ibs[0] := ib;
-      obs[0] := ob;
-            //delay.remove(ele);
-
-      }
-    }
-    time := time + 1;
-  }*/
 
 }

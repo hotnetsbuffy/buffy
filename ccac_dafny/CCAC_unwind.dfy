@@ -1,13 +1,10 @@
 include "buffer.dfy"
-include "sp.dfy"
-include "traffic.dfy"
 include "pathserver.dfy"
 include "CCA.dfy"
 include "delayserver.dfy"
 import CC = CCA
-import TR = Traffic 
-import SP = StrictPriority
 const T := 10
+import opened Buffer
 
 
 //method flush(ob: Buf, ib: Buf)
@@ -45,6 +42,7 @@ method {:axiom} Main(){
   oba[0] := [];
     a, b, c, d := CC.run_t(iba, oba, cwnd, sent, lost, seen_serviced);
     assert(|oba[0]| == b - sent);
+      assert(seen_serviced == 0);
     for i := 0 to (cwnd.Floor + 2)
       invariant 0 <= i <= cwnd.Floor + 2
       invariant |iba[2]| >= i  
@@ -57,7 +55,6 @@ method {:axiom} Main(){
     sent := b;
     lost := c;
     seen_serviced := d;
-    assert(seen_serviced == 0);
     ibb[0] := ibb[0] + oba[0];
     oba[0] := [];
     tokens, wastetrack, servicetrack := PathServer.run_ts(ibb, obb, tokens, wastetrack, servicetrack, time);

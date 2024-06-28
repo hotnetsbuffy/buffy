@@ -1,0 +1,12 @@
+DelayServer (
+input buffer arrive,
+output buffer serviced)
+{
+    delay_time = 1;
+    total = backlog(arrive);
+    for i = 0 to total {
+      if((head(ibs[0]) + delay_time) >= time) {
+        move(arrive, serviced, 1);
+      }
+    }
+}
